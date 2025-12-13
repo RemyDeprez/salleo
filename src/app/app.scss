@@ -1,0 +1,29 @@
+/* App-specific tweaks (neo-tech) */
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.login,
+.auth-card {
+  max-width: 520px;
+  margin: 0 auto;
+}
+.auth-card {
+  padding: 20px;
+}
+
+.neo-main .neo-card {
+  width: 100%;
+  max-width: 1100px;
+}
+
+.muted {
+  color: var(--neo-muted);
+}
+
+.small {
+  font-size: 12px;
+}
