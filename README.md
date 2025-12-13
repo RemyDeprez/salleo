@@ -69,12 +69,15 @@ Le frontend est responsable de :
 ### Utilisateur
 
 - Consultation des salles autorisées
+
 # Salleo — Frontend
 
 **Application :** gestion et réservation de salles (frontend Angular).
 
 ## Résumé
+
 Salleo est une interface moderne pour gérer des salles et leurs réservations. Le projet fournit :
+
 - Authentification et gestion d'utilisateur
 - Gestion des salles (création, listing, permissions)
 - Réservations avec détection de conflits
@@ -112,13 +115,13 @@ Salleo est une interface moderne pour gérer des salles et leurs réservations. 
 
 ## Démarrage local
 
-1) Installer les dépendances
+1. Installer les dépendances
 
 ```bash
 npm install
 ```
 
-2) Lancer le serveur de développement (watch)
+2. Lancer le serveur de développement (watch)
 
 ```bash
 npm run start
@@ -129,7 +132,7 @@ ng serve
 - Ouvrir http://localhost:4200/
 - Se connecter avec l'utilisateur de test : `test@example.com` / `password`.
 
-3) Build de production (optionnel)
+3. Build de production (optionnel)
 
 ```bash
 npm run build
@@ -138,7 +141,8 @@ npx http-server ./dist/salleo -p 4201
 # puis ouvrir http://localhost:4201
 ```
 
-4) Notes utiles
+4. Notes utiles
+
 - Le token dev est `dev-token` et est stocké en `sessionStorage` sous la clé `salleo_token`.
 - Si vous voulez forcer la session dev sans passer par le formulaire, dans la console du navigateur :
 
@@ -173,7 +177,6 @@ npm run dev-seed
 
 Le fichier généré contient des objets `users`, `rooms` et `reservations` (un `dev-user` et quelques salles). Vous pouvez utiliser ce fichier comme source pour un mock API local ou pour peupler votre backend de test.
 
-
 - CSP : en dev on autorise `unsafe-inline` et `blob:` ; en production, retirez ces valeurs et utilisez :
   - nonces/hashes pour scripts inline
   - `worker-src 'self'` + servir les workers depuis un fichier statique
@@ -203,6 +206,7 @@ Le fichier généré contient des objets `users`, `rooms` et `reservations` (un 
 ---
 
 Si vous voulez, j'ajoute au README :
+
 - un exemple d'API contract pour `/api/auth/login` (body attendu et réponse `{ token }`),
 - scripts pratiques (ex: `scripts/dev-seed.sh`) pour peupler des données de test.
 
