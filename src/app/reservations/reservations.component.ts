@@ -2,17 +2,20 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators, FormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
-import { Reservation } from '../store/reservations/reservation.model';
-import { ReservationStoreService } from '../store/reservations/reservation.store';
-import { RoomStoreService } from '../store/rooms/room.store';
-import { Room } from '../store/rooms/room.model';
+import { Reservation } from '../services/reservations/reservation.model';
+import { ReservationApiService } from '../services/reservations/reservation.service';
+import { RoomApiService } from '../services/rooms/room.service';
+import { Room } from '../services/rooms/room.model';
+import { ToastComponent } from '../shared/toast.component';
+import { ToastService } from '../shared/toast.service';
 
 @Component({
   selector: 'app-reservations',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ToastComponent],
   template: `
     <div>
+      <app-toast></app-toast>
       <h3>Réservations</h3>
 
       <div class="row" style="align-items:center; gap:12px; margin-bottom:12px;">
@@ -45,9 +48,10 @@ export class ReservationsComponent implements OnInit {
   rooms$!: Observable<Room[]>;
 
   constructor(
-    private fb: FormBuilder,
-    private store: ReservationStoreService,
-    private roomStore: RoomStoreService
+    private readonly fb: FormBuilder,
+    private readonly reservationApi: ReservationApiService,
+    private readonly roomApi: RoomApiService,
+    private readonly toast: ToastService
   ) {
     this.form = this.fb.group({
       title: ['', Validators.required],
@@ -57,31 +61,37 @@ export class ReservationsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.roomStore.load();
-    this.rooms$ = this.roomStore.list$;
-    this.store.load();
-    this.reservations$ = this.store.list$;
+    this.rooms$ = this.roomApi.list();
+    this.reservations$ = this.reservationApi.list();
   }
 
   create() {
     if (this.form.invalid) return;
-    const v = this.form.value;
-    const payload: Partial<Reservation> = {
+    const payload = this.buildPayload(this.form.value);
+    this.reservationApi.create(payload).subscribe({
+      next: () => {
+        this.form.reset();
+        this.toast.show('Réservation créée.', 'success');
+      },
+      error: (err) => this.handleError(err),
+    });
+  }
+
+  private buildPayload(v: any): Partial<Reservation> {
+    return {
       title: v.title,
       start: new Date(v.start).toISOString(),
       end: new Date(v.end).toISOString(),
     };
-    try {
-      this.store.create(payload).subscribe({
-        next: () => this.form.reset(),
-        error: (err) => alert('Erreur: ' + (err?.message || err)),
-      });
-    } catch (err: any) {
-      alert('Erreur: ' + err.message);
-    }
+  }
+
+  private handleError(err: any) {
+    const message = err?.message ?? (typeof err === 'string' ? err : JSON.stringify(err));
+    console.error(err);
+    this.toast.show('Erreur: ' + message, 'error');
   }
 
   onRoomChange(roomId?: string) {
-    this.store.load(roomId || undefined);
+    this.reservations$ = this.reservationApi.list(roomId || undefined);
   }
 }

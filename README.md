@@ -70,7 +70,7 @@ Le frontend est responsable de :
 
 - Consultation des salles autorisées
 
-# Salleo — Frontend
+## Salleo — Frontend
 
 **Application :** gestion et réservation de salles (frontend Angular).
 
@@ -87,7 +87,7 @@ Salleo est une interface moderne pour gérer des salles et leurs réservations. 
 
 ---
 
-**Fonctionnalités déjà fonctionnelles (local/dev)**
+## Fonctionnalités déjà fonctionnelles (local/dev)
 
 - Connexion locale avec un utilisateur de test (pas d'API requise)
   - Email : `test@example.com`
@@ -100,7 +100,7 @@ Salleo est une interface moderne pour gérer des salles et leurs réservations. 
 
 ---
 
-**Spécifications techniques**
+## Spécifications techniques
 
 - Framework : Angular (standalone components)
 - State management : RxJS BehaviorSubjects (services de store)
@@ -115,13 +115,13 @@ Salleo est une interface moderne pour gérer des salles et leurs réservations. 
 
 ## Démarrage local
 
-1. Installer les dépendances
+1 Installer les dépendances
 
 ```bash
 npm install
 ```
 
-2. Lancer le serveur de développement (watch)
+2 Lancer le serveur de développement (watch)
 
 ```bash
 npm run start
@@ -129,10 +129,10 @@ npm run start
 ng serve
 ```
 
-- Ouvrir http://localhost:4200/
+- Ouvrir <http://localhost:4200/>
 - Se connecter avec l'utilisateur de test : `test@example.com` / `password`.
 
-3. Build de production (optionnel)
+3 Build de production (optionnel)
 
 ```bash
 npm run build
@@ -141,7 +141,7 @@ npx http-server ./dist/salleo -p 4201
 # puis ouvrir http://localhost:4201
 ```
 
-4. Notes utiles
+4 Notes utiles
 
 - Le token dev est `dev-token` et est stocké en `sessionStorage` sous la clé `salleo_token`.
 - Si vous voulez forcer la session dev sans passer par le formulaire, dans la console du navigateur :
@@ -155,10 +155,6 @@ sessionStorage.setItem('salleo_token', 'dev-token');
 ```js
 sessionStorage.removeItem('salleo_token');
 ```
-
----
-
-## Debug & sécurité (conseils)
 
 ## Seeder (peupler des données de test)
 

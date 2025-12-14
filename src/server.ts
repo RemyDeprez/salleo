@@ -26,9 +26,18 @@ app.use((req, res, next) => {
   // HSTS - enable only on HTTPS in production if desired
   // res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   // Content Security Policy - adjust as needed for your resources
+  // Allow an extra connect-src during development (e.g. local backend at http://localhost:8080)
+  const connectSrc = ["'self'", 'https:'];
+  // If running in non-production or explicitly allowing local API, include localhost:8080
+  if (process.env['NODE_ENV'] !== 'production' || process.env['ALLOW_LOCAL_API'] === '1') {
+    connectSrc.push('http://localhost:8080');
+  }
+
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https:; font-src 'self' data:;"
+    `default-src 'self'; script-src 'self' 'unsafe-inline' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src ${connectSrc.join(
+      ' '
+    )}; font-src 'self' data:`
   );
   next();
 });

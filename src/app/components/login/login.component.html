@@ -1,0 +1,36 @@
+<div class="auth-viewport">
+  <div class="auth-card">
+    <div class="brand">
+      <h1>Salleo</h1>
+      <p class="subtitle">Accédez à vos salles et réservations</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field">
+        <input placeholder="Email" formControlName="email" type="email" />
+        <div class="error" *ngIf="form.controls['email'].touched && form.controls['email'].invalid">
+          <small *ngIf="form.controls['email'].errors?.['required']">Email requis</small>
+          <small *ngIf="form.controls['email'].errors?.['email']">Email invalide</small>
+        </div>
+      </div>
+
+      <div class="field">
+        <input placeholder="Mot de passe" formControlName="password" type="password" />
+        <div
+          class="error"
+          *ngIf="form.controls['password'].touched && form.controls['password'].invalid"
+        >
+          <small *ngIf="form.controls['password'].errors?.['required']">Mot de passe requis</small>
+          <small *ngIf="form.controls['password'].errors?.['minlength']">Min 6 caractères</small>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" type="submit" [disabled]="form.invalid || isSubmitting">
+          Se connecter
+        </button>
+        <button class="secondary" type="button" (click)="goRegister()">S'inscrire</button>
+      </div>
+    </form>
+  </div>
+</div>

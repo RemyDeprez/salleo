@@ -4,9 +4,7 @@
       <h2>Salles</h2>
       <p class="muted">Gérez vos salles ici</p>
     </div>
-    <div *ngIf="user$ | async as user" class="user-info muted">
-      Connecté en tant que <strong>{{ user.name }}</strong> — Plan: {{ user.plan || 'free' }}
-    </div>
+    <!-- user display removed (user store removed) -->
   </header>
 
   <section class="rooms-actions neo-card">
