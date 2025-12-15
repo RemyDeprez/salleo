@@ -17,19 +17,44 @@
   </section>
 
   <section class="rooms-list">
-    <div *ngIf="rooms$ | async as rooms">
-      <p *ngIf="rooms.length === 0" class="muted">Aucune salle trouvée.</p>
-      <ul>
-        <li *ngFor="let r of rooms" class="neo-card">
-          <div class="row" style="justify-content: space-between; align-items: center">
-            <div>
-              <div class="neo-title">{{ r.name }}</div>
-              <div class="muted">{{ r.description }}</div>
-            </div>
-            <div class="muted">{{ r.isPublic ? 'Publique' : 'Privée' }}</div>
+    <div *ngIf="pagedRooms.length === 0" class="muted">Aucune salle trouvée.</div>
+
+    <ul *ngIf="pagedRooms.length > 0">
+      <li *ngFor="let r of pagedRooms" class="neo-card">
+        <div class="row" style="justify-content: space-between; align-items: center">
+          <div>
+            <div class="neo-title">{{ r.name }}</div>
+            <div class="muted">{{ r.description }}</div>
           </div>
-        </li>
-      </ul>
+          <div class="muted">{{ r.isPublic ? 'Publique' : 'Privée' }}</div>
+        </div>
+      </li>
+    </ul>
+
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="btn-neo" (click)="prev()" [disabled]="currentPage === 1">Préc</button>
+
+      <ng-container *ngIf="firstVisible > 1">
+        <button class="btn-neo" (click)="goTo(1)">1</button>
+        <span class="muted" *ngIf="firstVisible > 2">…</span>
+      </ng-container>
+
+      <ng-container *ngFor="let p of visiblePages">
+        <button class="btn-neo" [class.active]="currentPage === p" (click)="goTo(p)">
+          {{ p }}
+        </button>
+      </ng-container>
+
+      <ng-container *ngIf="lastVisible < totalPages">
+        <span class="muted" *ngIf="lastVisible < totalPages - 1">…</span>
+        <button class="btn-neo" (click)="goTo(totalPages)">{{ totalPages }}</button>
+      </ng-container>
+
+      <button class="btn-neo" (click)="next()" [disabled]="currentPage === totalPages">Suiv</button>
+
+      <div class="pagination-info muted">
+        Affiche {{ startIndex }} - {{ endIndex }} sur {{ rooms.length }}
+      </div>
     </div>
   </section>
 </div>

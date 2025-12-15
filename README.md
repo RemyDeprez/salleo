@@ -89,50 +89,44 @@ Salleo est une interface moderne pour gérer des salles et leurs réservations. 
 
 ## Fonctionnalités déjà fonctionnelles (local/dev)
 
-- Connexion locale avec un utilisateur de test (pas d'API requise)
-  - Email : `test@example.com`
-  - Mot de passe : `password`
-  - En local, ces identifiants génèrent un token `dev-token` stocké dans `sessionStorage` sous la clé `salleo_token`.
-- Stores RxJS pour `users`, `rooms`, `reservations` (lecture/écriture en mémoire ou via API si configurée)
-- Interceptor HTTP qui attache `Authorization: Bearer <token>` si un token est présent
-- Guards de route basiques (protection par authentification)
-- Thème "Neo‑Tech Funk" appliqué globalement
+- Authentification : `AuthService` supporte soit l'envoi d'un mot de passe en clair (le client le hashe avant d'envoyer), soit l'envoi d'un `passwordHash` avec `clientHashed: true`. Le hash client est SHA‑256 (Web Crypto). Le backend doit BCrypter le hash reçu pour le stockage et la comparaison.
+- Services API : `RoomApiService`, `ReservationApiService` exposent les endpoints et servent de couche principale (remplacent les anciens stores plus lourds).
+- Interceptor HTTP : attache `Authorization: Bearer <token>` si `sessionStorage.salleo_token` est présent.
+- Guards de route basiques (protection par authentification).
+- UI : Pagination côté client pour les salles (10 éléments par page), loader pendant le chargement, et toasts via `ToastService` / `ToastComponent`.
+- Thème "Neo‑Tech Funk" appliqué globalement.
 
 ---
 
 ## Spécifications techniques
 
 - Framework : Angular (standalone components)
-- State management : RxJS BehaviorSubjects (services de store)
-- HTTP : `HttpClient` + interceptor pour token
-- Auth : `AuthService` (dev mock + fallback vers `/api/auth/login`)
-- SSR: configuration minimale et middleware Express (`src/server.ts`) pour headers de sécurité
-- Sécurité :
-  - Les en-têtes security (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy) sont définis côté serveur dans `src/server.ts`.
-  - En dev, la meta CSP et l'en-tête serveur autorisent `unsafe-inline` et `blob:` pour faciliter le dev (WebWorkers blobs, scripts inline). En production, retirez ces exceptions et appliquez des nonces/hashes ou servez les workers depuis des fichiers statiques.
+- Accès aux données : services `src/app/services/*` exposant méthodes `list()` / `create()` (remplacent les anciens stores lourds)
+- HTTP : `HttpClient` + interceptor pour token; `proxy.conf.json` configure le proxy `/api` → `http://localhost:8080` pour le dev
+- Auth : `AuthService` accepte `password` ou `passwordHash` (avec `clientHashed`), client calcule SHA‑256 avant envoi
+- SSR : Express middleware dans `src/server.ts` gère headers de sécurité et CSP. En dev, la CSP autorise `http://localhost:8080` pour faciliter le front→API via proxy.
 
 ---
 
 ## Démarrage local
 
-1 Installer les dépendances
+1. Installer les dépendances
 
 ```bash
 npm install
 ```
 
-2 Lancer le serveur de développement (watch)
+1. Lancer le serveur de développement (watch)
 
 ```bash
 npm run start
-# ou
-ng serve
+# ng serve --proxy-config proxy.conf.json
 ```
 
 - Ouvrir <http://localhost:4200/>
-- Se connecter avec l'utilisateur de test : `test@example.com` / `password`.
+- Le front utilise par défaut le proxy `/api` → `http://localhost:8080`. Assurez‑vous que votre backend écoute sur `http://localhost:8080` ou adaptez `src/environments/api.urls.ts` / variables d'environnement (`API_BASE_ENV`, `API_ENV`).
 
-3 Build de production (optionnel)
+1. Build de production (optionnel)
 
 ```bash
 npm run build
@@ -141,60 +135,64 @@ npx http-server ./dist/salleo -p 4201
 # puis ouvrir http://localhost:4201
 ```
 
-4 Notes utiles
+1. Notes utiles
 
-- Le token dev est `dev-token` et est stocké en `sessionStorage` sous la clé `salleo_token`.
-- Si vous voulez forcer la session dev sans passer par le formulaire, dans la console du navigateur :
-
-```js
-sessionStorage.setItem('salleo_token', 'dev-token');
-```
-
-- Pour effacer la session :
-
-```js
-sessionStorage.removeItem('salleo_token');
-```
+- Il n'y a plus de "dev-token" automatique dans le front. Pour bypasser l'auth en dev, vous pouvez insérer manuellement un token valide dans `sessionStorage` (clé `salleo_token`) ou utiliser un backend mock adapté.
+- Pour le hashage : le client calcule SHA‑256 (Web Crypto) et envoie `{ passwordHash, clientHashed: true }` vers `/api/auth/*`.
 
 ## Seeder (peupler des données de test)
 
-Un petit script permet de générer des jeux de données de développement dans `src/assets/mock-data.json`.
+Les données de développement sont fournies en assets :
 
-- Script Node : `scripts/dev-seed.js`
-- Wrapper shell : `scripts/dev-seed.sh`
-- NPM : `npm run dev-seed`
+- `src/assets/dev-rooms.json` — jeu de salles (100 entrées) pour le développement local.
+- `src/assets/seed_rooms.sql` et `src/assets/schema.sql` — scripts SQL pour peupler une base PostgreSQL locale.
 
-Exemple :
+(Ancien script `scripts/dev-seed.js` et `scripts/dev-seed.sh` ont été retirés.)
 
-```bash
-npm run dev-seed
-# output: src/assets/mock-data.json
-```
-
-Le fichier généré contient des objets `users`, `rooms` et `reservations` (un `dev-user` et quelques salles). Vous pouvez utiliser ce fichier comme source pour un mock API local ou pour peupler votre backend de test.
-
-- CSP : en dev on autorise `unsafe-inline` et `blob:` ; en production, retirez ces valeurs et utilisez :
-  - nonces/hashes pour scripts inline
-  - `worker-src 'self'` + servir les workers depuis un fichier statique
-  - header `Strict-Transport-Security` (HSTS) uniquement derrière HTTPS
-- X-Frame-Options : doit être envoyé côté serveur (défini dans `src/server.ts`) — ne laissez pas de meta `X-Frame-Options` dans `index.html`.
-- Auth : l'implémentation actuelle propose un fallback mock local. L'API REST devra renvoyer `{ token }` pour que la connexion fonctionne sans fallback.
+- CSP : en dev la configuration permet `http://localhost:8080` pour les connexions API. En production, retirez les exceptions (`unsafe-inline`, `blob:`) et utilisez nonces/hashes ou fichiers statiques pour les workers.
+- X-Frame-Options : géré côté serveur (`src/server.ts`).
+- Auth : le frontend calcule un hash client (SHA‑256) pour le mot de passe — le backend doit BCrypt ce hash pour le stockage et la comparaison.
 
 ---
 
 ## Structure importante (fichiers clés)
 
-- `src/app/auth/*` — `AuthService`, `login.component.ts`, `token.interceptor.ts`, `auth.guard.ts`
-- `src/app/store/*` — stores RxJS (`users`, `rooms`, `reservations`)
-- `src/app/rooms/*`, `src/app/reservations/*` — pages principales
+- `src/app/auth/*` — `AuthService`, `login.component.ts`, `register.component.ts`, `token.interceptor.ts`, `auth.guard.ts`
+- `src/app/services/*` — services API (`rooms`, `reservations`, etc.) remplaçant les anciens stores
+- `src/app/components/*` — composants pages (Rooms, Reservations, Login, Register, Toast)
 - `src/server.ts` — serveur Express minimal + headers security
-- `src/index.html`, `src/styles.scss`, `src/app/app.scss` — thème et styles globaux
+- `src/index.html`, `src/styles.scss` — thème et styles globaux
 
 ---
 
 ## Roadmap (prioritaire)
 
-- Finaliser l'intégration REST pour l'authentification et les ressources (users, rooms, reservations)
-- Remplacer `unsafe-inline` / `blob:` par une stratégie sécurisée (nonces, fichiers statiques pour workers)
-- Ajouter tests unitaires et e2e
-- Mettre en place CI/CD et règles de sécurité pour la prod
+- Finaliser l'intégration REST pour l'authentification et les ressources (users, rooms, reservations). En particulier : accepter et BCrypt du `passwordHash` envoyé par le client.
+- Restaurer/ajouter une option de session de développement (dev user / dev token) si nécessaire pour le flux local.
+- Ajouter tests unitaires et e2e pour couvrir l'auth, rooms et reservations.
+- Mettre en place CI/CD et renforcer les règles de sécurité (retirer `unsafe-inline` / `blob:` en prod, appliquer nonces/hashes).
+- UX : ajouter spinners globaux, validation côté champ, et tests d'accessibilité.
+
+## Gestion des salles par les Managers
+
+-Un utilisateur qui créer une salle deviendra automatiquement un manager de salle.
+-Un manager de salle pourra créer un groupe/une équipe.
+-Un manager pourra inviter des utilisateurs à rejoindre son groupe . (notifications mail + application).
+-Un manager pourra créer plus de salle par la suite.
+-Un manager pourra créer un aménagement (équipements en tout genre, du meuble au feutre).
+-Un manager pourra créer des plannings d'ouverture des salles.
+-Un manager pourra accepter les demandes de réservation des utilisateurs de son/ses groupes.(Notification mail + application)
+-Un manager pourra gérer les permissions des utilisateurs de leur groupe au sein de leur groupe. (possibilité d'élever les permissions de manière unitaire)(Notification mail + application)
+
+- Un utilisateur membre d'un groupe pourra faire une demande de résérvation de salle de son groupe. (Notification mail + application manager + user)
+- Un utilisateur membre d'un groupe pourra modifier une demande de résérvation de salle de son groupe.(Notification mail + application manager + user)
+- Un utilisateur membre d'un groupe pourra supprimer une demande de résérvation de salle de son groupe.(Notification mail + application manager + user)
+- Un utilisateur membre d'un groupe pourra quitter un groupe.(Notification mail + application manager groupe)
+- Un utilisateur membre d'un groupe pourra pourra faire une demande de permission.(Notification mail + application manager groupe)
+
+## Idées Améliorations
+
+- Intégration du calendrier google pour pouvoir intégrer le calendrier du user et récupérér ses réunions pour qu'il calque ses résérvation visuelement avec ses besoins.
+- Messagerie entre user d'un groupe, discussion de salle ?
+- Signalement de salle? Equipement manquant ? Endommagé ?
+- Intégrer un suivi de libération de salle ? Notifications de disponibilité sur créneaux configurés ?
