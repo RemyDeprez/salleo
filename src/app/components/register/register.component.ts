@@ -34,7 +34,6 @@ export class RegisterComponent {
     const username = String(v.username || '');
     const email = String(v.email || '');
     const password = String(v.password || '');
-    console.log(username, email, password);
     //Hash the password using BCrypt
     hashPassword(password)
       .then((passwordHash) =>
@@ -52,6 +51,7 @@ export class RegisterComponent {
           })
       );
   }
+  
 
   isSubmitting = false;
 }

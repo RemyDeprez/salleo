@@ -1,0 +1,11 @@
+<nav class="navbar">
+  <div class="brand">
+    <a routerLink="/salles" class="logo">Salleo</a>
+  </div>
+
+  <div class="links" *ngIf="isAuthenticated()">
+    <a routerLink="/salles" routerLinkActive="active">Salles</a>
+    <a routerLink="/reservations" routerLinkActive="active">Réservations</a>
+    <button class="btn-neo" type="button" (click)="logout()">Se déconnecter</button>
+  </div>
+</nav>

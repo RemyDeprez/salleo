@@ -1,6 +1,9 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
+import { AuthService } from '../../auth/auth.service';
+import { ToastService } from '../../shared/toast.service';
 import { RoomApiService } from '../../services/rooms/room.service';
 import { Room } from '../../services/rooms/room.model';
 import { Observable, Subscription } from 'rxjs';
@@ -8,7 +11,7 @@ import { Observable, Subscription } from 'rxjs';
 @Component({
   selector: 'app-rooms',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './rooms.component.html',
   styleUrls: ['./rooms.component.scss'],
 })
@@ -28,7 +31,10 @@ export class RoomsComponent implements OnInit, OnDestroy {
   constructor(
     private readonly fb: FormBuilder,
     private readonly roomApi: RoomApiService,
-    private readonly cd: ChangeDetectorRef
+    private readonly cd: ChangeDetectorRef,
+    private readonly router: Router,
+    private readonly auth: AuthService,
+    private readonly toast: ToastService
   ) {
     this.form = this.fb.group({
       name: ['', Validators.required],
@@ -69,8 +75,19 @@ export class RoomsComponent implements OnInit, OnDestroy {
     );
   }
 
+  get isAuthenticated(): boolean {
+    return this.auth.isAuthenticated();
+  }
+
   create() {
     if (this.form.invalid) return;
+
+    if (!this.isAuthenticated) {
+      this.toast.show('Vous devez être connecté pour créer une salle.', 'error');
+      this.router.navigateByUrl('/login');
+      return;
+    }
+
     const v = this.form.value;
     const payload: Partial<Room> = {
       name: v.name as string,
@@ -78,17 +95,30 @@ export class RoomsComponent implements OnInit, OnDestroy {
       isPublic: !!v.isPublic,
       ownerId: undefined,
     };
+
     try {
       this.roomApi.create(payload).subscribe({
         next: () => {
           this.form.reset();
           // refresh list so pagination updates
           this.loadRooms();
+          this.toast.show('Salle créée', 'success');
         },
-        error: (e) => alert('Erreur: ' + (e?.message || e)),
+        error: (e: any) => {
+          const msg = e?.message || e?.error?.message || 'Erreur lors de la création';
+          if (e?.status === 401) {
+            this.toast.show('Session expirée, veuillez vous reconnecter.', 'error');
+            try {
+              sessionStorage.removeItem('salleo_token');
+            } catch {}
+            this.router.navigateByUrl('/login');
+            return;
+          }
+          this.toast.show(msg, 'error');
+        },
       });
     } catch (err: any) {
-      alert('Erreur: ' + err.message);
+      this.toast.show('Erreur: ' + err.message, 'error');
     }
   }
 
